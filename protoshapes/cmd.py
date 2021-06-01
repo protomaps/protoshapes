@@ -27,5 +27,6 @@ def main():
 
     with open(parsed.output, 'w') as csvfile:
         writer = csv.writer(csvfile, delimiter='\t')
+        writer.writerow(["name","WKT"])
         h = Handler(writer)
         h.apply_file(parsed.osm_file, locations=True, idx='sparse_file_array')

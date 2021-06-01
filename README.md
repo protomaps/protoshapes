@@ -14,6 +14,14 @@ This project doesn't work yet. The goal is to create simplified polygons for pla
 
 Geometries are designed to be worked with individually, and not for display together in something like a choropleth, because adjacent polygons will overlap when simplified. For that use case you should use [TopoJSON](https://github.com/topojson/topojson) or another kind of quantization-based technique.
 
+## Workflow
+
+Prepare your PBF file:
+
+    osmium tags-filter -o planet-boundary.osm.pbf planet.osm.pbf r/boundary
+    create-protoshapes planet-boundary.osm.pbf protoshapes-planet.csv
+    ogr2ogr -f flatgeobuf protoshapes-planet.fgb protoshapes-planet.csv
+
 ## See also
 * [Quattroshapes](http://quattroshapes.com)
 * [Mesoshapes](https://www.mapzen.com/blog/mesoshapes/)

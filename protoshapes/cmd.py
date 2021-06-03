@@ -30,14 +30,14 @@ class Handler(osmium.SimpleHandler):
 
     def area(self,a):
         try:
-            if 'boundary' in a.tags:
-                if a.tags['boundary'] in ['administrative','state_park','national_park','census','political','neighbourhood','place']:
+            if 'boundary' in a.tags and 'name' in a.tags:
+                if a.tags['boundary'] in ['administrative','state_park','national_park','census','political','neighbourhood','place','tourist_zone','political_fraction','local']:
                     wkb = wkbfab.create_multipolygon(a)
                     multipolygon = wkblib.loads(wkb, hex=True)
                     if geodesic_exterior_area(multipolygon) > 50000:
                         prefix = 'w' if a.from_way() else 'r'
                         self.writer.writerow([f"{prefix}{a.orig_id()}",a.tags.get('name'),a.tags.get('boundary'),multipolygon.wkt])
-                elif a.tags['boundary'] in ['protected_area','aboriginal_lands','religious_administration','wall','native_reservation',"fire_district"]:
+                elif a.tags['boundary'] in ['protected_area','aboriginal_lands','religious_administration','wall','native_reservation',"fire_district","postal_code","low_emission_zone","FIXME",'disused']:
                     pass
                 else:
                     print(a.orig_id(),a.tags['boundary'])

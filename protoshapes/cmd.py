@@ -2,10 +2,7 @@ import argparse
 import csv
 import osmium
 import shapely.wkb as wkblib
-from shapely.ops import transform
-import dbm
 import math
-import pyproj
 
 wkbfab = osmium.geom.WKBFactory()
 

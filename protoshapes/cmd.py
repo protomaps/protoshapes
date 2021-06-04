@@ -33,6 +33,11 @@ boundary_values = [
     'municipality'
 ]
 
+def osm_id(fid):
+    if fid % 2 == 0:
+        return f"w {int(fid/2)}"
+    return f"r {int((fid-1)/2)}"
+
 def rad(degree):
     return degree * math.pi / 180
 
@@ -48,7 +53,7 @@ def geodesic_exterior_area(mp):
     area = 0
     for polygon in mp:
         area += geodesic_ring_area(polygon.exterior.coords)
-    return area
+    return int(area)
 
 class Handler(osmium.SimpleHandler):
     def __init__(self,conn,cursor,idx):
@@ -64,10 +69,9 @@ class Handler(osmium.SimpleHandler):
                 multipolygon = wkblib.loads(wkb, hex=True)
                 area = geodesic_exterior_area(multipolygon)
                 if area > 50000:
-                    # prefix = 'w' if a.from_way() else 'r'
                     self.cursor.execute("INSERT INTO features_original VALUES (?,?,?,?,?,?)",(a.id,a.tags.get("name"),a.tags.get("boundary"),a.tags.get("admin_level"),area,multipolygon.wkb))
                     self.conn.commit()
-                    self.idx.insert(a.id,multipolygon.bounds)
+                    self.idx.insert(a.id,multipolygon.bounds,obj=area)
         except RuntimeError as e:
             print("Error:",a.orig_id())
 
@@ -104,8 +108,22 @@ def main():
     start = time.time()
     h = Handler(conn,cursor,idx)
     h.apply_file(parsed.osm_file, locations=True, idx='sparse_file_array')
-    conn.close()
 
     # populate spatial fields
+    subcursor = conn.cursor()
+    for row in cursor.execute('SELECT id, area, wkb_geometry FROM features_original ORDER BY area DESC'):
+        fid = row[0] 
+        area = row[1]
+        multipolygon = wkblib.loads(row[2])
+        intersections = [(i.id,i.object) for i in idx.intersection(multipolygon.bounds,objects=True) if (i.id != fid and i.object > area)]
+        candidates = [v[0] for v in sorted(intersections,key=lambda x:x[1])]
+        while len(candidates) > 0:
+            candidate = candidates.pop(0)
+            subcursor.execute("SELECT wkb_geometry FROM features_original WHERE id = ?",(candidate,))
+            candidate_row = subcursor.fetchone()
+            candidate_poly = wkblib.loads(candidate_row[0])
+            if multipolygon.within(candidate_poly):
+                pass
 
     print("Elapsed: ", time.time() - start)
+    conn.close()

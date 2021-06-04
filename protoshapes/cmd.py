@@ -6,6 +6,30 @@ import math
 
 wkbfab = osmium.geom.WKBFactory()
 
+# https://taginfo.openstreetmap.org/keys/boundary#values
+boundary_values = [
+    'administrative',
+    'protected_area',
+    'political',
+    'national_park',
+    'census',
+    'maritime',
+    'neighborhood',
+    'neighbourhood',
+    'special_economic_zone',
+    'regional_park',
+    'state_park',
+    'place',
+    'tourist_zone',
+    'statistical',
+    'political_fraction',
+    'local_authority',
+    'local',
+    'environment',
+    'civil',
+    'municipality'
+]
+
 def rad(degree):
     return degree * math.pi / 180
 

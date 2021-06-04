@@ -5,6 +5,7 @@ import time
 import os
 import osmium
 import shapely.wkb as wkblib
+from rtree import index
 
 wkbfab = osmium.geom.WKBFactory()
 
@@ -50,18 +51,23 @@ def geodesic_exterior_area(mp):
     return area
 
 class Handler(osmium.SimpleHandler):
-    def __init__(self,conn,cursor):
+    def __init__(self,conn,cursor,idx):
         super(Handler, self).__init__()
+        self.conn = conn
         self.cursor = cursor
+        self.idx = idx
 
     def area(self,a):
         try:
             if 'name' in a.tags and a.tags.get('boundary') in boundary_values:
                 wkb = wkbfab.create_multipolygon(a)
                 multipolygon = wkblib.loads(wkb, hex=True)
-                if geodesic_exterior_area(multipolygon) > 50000:
+                area = geodesic_exterior_area(multipolygon)
+                if area > 50000:
                     # prefix = 'w' if a.from_way() else 'r'
                     self.cursor.execute("INSERT INTO features_original VALUES (?,?,?,?)",(a.id,a.tags.get("name"),a.tags.get("boundary"),multipolygon.wkb))
+                    self.conn.commit()
+                    self.idx.insert(a.id,multipolygon.bounds)
         except RuntimeError as e:
             print("Error:",a.orig_id())
 
@@ -93,9 +99,15 @@ def main():
     cursor.execute("INSERT INTO geometry_columns VALUES (?,?,?,?,?,?)",("features_original","wkb_geometry",6,2,0,"WKB"))
     cursor.execute('CREATE TABLE IF NOT EXISTS features_original (id integer PRIMARY KEY, name text, boundary text, wkb_geometry blob);')
 
+
+    # populate the initial table of geometries
+    idx = index.Index()
     start = time.time()
-    h = Handler(conn,cursor)
+    h = Handler(conn,cursor,idx)
     h.apply_file(parsed.osm_file, locations=True, idx='sparse_file_array')
-    conn.commit()
     conn.close()
+
+    # populate spatial fields
+
+
     print("Elapsed: ", time.time() - start)

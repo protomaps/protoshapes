@@ -65,7 +65,7 @@ class Handler(osmium.SimpleHandler):
                 area = geodesic_exterior_area(multipolygon)
                 if area > 50000:
                     # prefix = 'w' if a.from_way() else 'r'
-                    self.cursor.execute("INSERT INTO features_original VALUES (?,?,?,?)",(a.id,a.tags.get("name"),a.tags.get("boundary"),multipolygon.wkb))
+                    self.cursor.execute("INSERT INTO features_original VALUES (?,?,?,?,?,?)",(a.id,a.tags.get("name"),a.tags.get("boundary"),a.tags.get("admin_level"),area,multipolygon.wkb))
                     self.conn.commit()
                     self.idx.insert(a.id,multipolygon.bounds)
         except RuntimeError as e:
@@ -97,8 +97,7 @@ def main():
     cursor.execute("INSERT INTO spatial_ref_sys VALUES (?,?,?,?)",(0,"epsg",4326,EPSG4326))
     cursor.execute('CREATE TABLE IF NOT EXISTS geometry_columns (f_table_name text, f_geometry_column text, geometry_type integer, coord_dimension integer, srid integer, geometry_format text);')
     cursor.execute("INSERT INTO geometry_columns VALUES (?,?,?,?,?,?)",("features_original","wkb_geometry",6,2,0,"WKB"))
-    cursor.execute('CREATE TABLE IF NOT EXISTS features_original (id integer PRIMARY KEY, name text, boundary text, wkb_geometry blob);')
-
+    cursor.execute('CREATE TABLE IF NOT EXISTS features_original (id integer PRIMARY KEY, name text, boundary text, admin_level integer, area integer, wkb_geometry blob);')
 
     # populate the initial table of geometries
     idx = index.Index()
@@ -108,6 +107,5 @@ def main():
     conn.close()
 
     # populate spatial fields
-
 
     print("Elapsed: ", time.time() - start)

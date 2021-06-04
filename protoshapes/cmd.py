@@ -1,8 +1,10 @@
 import argparse
-import csv
+import math
+import sqlite3
+import time
+import os
 import osmium
 import shapely.wkb as wkblib
-import math
 
 wkbfab = osmium.geom.WKBFactory()
 
@@ -48,34 +50,52 @@ def geodesic_exterior_area(mp):
     return area
 
 class Handler(osmium.SimpleHandler):
-    def __init__(self,writer):
+    def __init__(self,conn,cursor):
         super(Handler, self).__init__()
-        self.writer = writer
+        self.cursor = cursor
 
     def area(self,a):
         try:
-            if 'boundary' in a.tags and 'name' in a.tags:
-                if a.tags['boundary'] in ['administrative','state_park','national_park','census','political','neighbourhood','place','tourist_zone','political_fraction','local']:
-                    wkb = wkbfab.create_multipolygon(a)
-                    multipolygon = wkblib.loads(wkb, hex=True)
-                    if geodesic_exterior_area(multipolygon) > 50000:
-                        prefix = 'w' if a.from_way() else 'r'
-                        self.writer.writerow([f"{prefix}{a.orig_id()}",a.tags.get('name'),a.tags.get('boundary'),multipolygon.wkt])
-                elif a.tags['boundary'] in ['protected_area','aboriginal_lands','religious_administration','wall','native_reservation',"fire_district","postal_code","low_emission_zone","FIXME",'disused']:
-                    pass
-                else:
-                    print(a.orig_id(),a.tags['boundary'])
+            if 'name' in a.tags and a.tags.get('boundary') in boundary_values:
+                wkb = wkbfab.create_multipolygon(a)
+                multipolygon = wkblib.loads(wkb, hex=True)
+                if geodesic_exterior_area(multipolygon) > 50000:
+                    # prefix = 'w' if a.from_way() else 'r'
+                    self.cursor.execute("INSERT INTO features_original VALUES (?,?,?,?)",(a.id,a.tags.get("name"),a.tags.get("boundary"),multipolygon.wkb))
         except RuntimeError as e:
             print("Error:",a.orig_id())
+
+EPSG4326 = '''GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9122"]],
+    AUTHORITY["EPSG","4326"]]'''
 
 def main():
     parser = argparse.ArgumentParser(description='Create a protoshapes archive from an osm file.')
     parser.add_argument('osm_file',  help='OSM .pbf or .xml input file')
-    parser.add_argument('output',  help='output file')
+    parser.add_argument('output',  help='output sqlite')
     parsed = parser.parse_args()
 
-    with open(parsed.output, 'w') as csvfile:
-        writer = csv.writer(csvfile, delimiter='\t')
-        writer.writerow(["osm_id","name","boundary","WKT"])
-        h = Handler(writer)
-        h.apply_file(parsed.osm_file, locations=True, idx='sparse_file_array')
+    if os.path.exists(parsed.output):
+        os.remove(parsed.output)
+
+    conn = sqlite3.connect(parsed.output)
+    cursor = conn.cursor()
+    cursor.execute('CREATE TABLE IF NOT EXISTS spatial_ref_sys (srid integer unique, auth_name text, auth_srid integer, srtext text);')
+    cursor.execute("INSERT INTO spatial_ref_sys VALUES (?,?,?,?)",(0,"epsg",4326,EPSG4326))
+    cursor.execute('CREATE TABLE IF NOT EXISTS geometry_columns (f_table_name text, f_geometry_column text, geometry_type integer, coord_dimension integer, srid integer, geometry_format text);')
+    cursor.execute("INSERT INTO geometry_columns VALUES (?,?,?,?,?,?)",("features_original","wkb_geometry",6,2,0,"WKB"))
+    cursor.execute('CREATE TABLE IF NOT EXISTS features_original (id integer PRIMARY KEY, name text, boundary text, wkb_geometry blob);')
+
+    start = time.time()
+    h = Handler(conn,cursor)
+    h.apply_file(parsed.osm_file, locations=True, idx='sparse_file_array')
+    conn.commit()
+    conn.close()
+    print("Elapsed: ", time.time() - start)

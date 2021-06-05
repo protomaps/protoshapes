@@ -28,11 +28,26 @@ app.teardown_appcontext(close_db)
 def index():
     return send_from_directory('.','index.html')
 
+@app.route('/overview')
+def get_overview():
+    results = []
+    db = get_db()
+    cursor = db.cursor()
+
+    rows = cursor.execute("SELECT id,name FROM features_original WHERE admin_level = (select min(admin_level) from features_original);")
+    for row in rows:
+        results.append({
+            'id':row['id'],
+            'name':row['name']
+        })
+
+    return jsonify(results)
+
 @app.route('/shape/<shape_id>')
 def get_shape(shape_id):
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("SELECT name, wkb_geometry,a2,a3,a4,a5,a6,a7,a8,a9,a10,admin_level from features_original where id = ?",(shape_id,))
+    cursor.execute("SELECT name,wkb_geometry,a2,a3,a4,a5,a6,a7,a8,a9,a10,admin_level from features_original where id = ?",(shape_id,))
     row = cursor.fetchone()
 
     parent_ids = []

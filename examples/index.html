@@ -19,6 +19,7 @@
         <div class="flex vh-100">
             <div class="w5 pa3 overflow-y-scroll" id="app">
                 <h4>protoshapes</h4>
+                <span v-on:click="showOverview" class="blue underline pointer">Back to Top</span>
                 <div class="mb2">{{ name }}</div>
                 <div>
                     parents:
@@ -48,6 +49,7 @@
         var currentLayer
 
         const showFid = fid => {
+            console.log("show fid",fid)
             fetch("/shape/" + fid).then(result => {
                 return result.json()
             }).then(json => {
@@ -64,16 +66,27 @@
             })
         }
 
+        showOverview = () => {
+            fetch("/overview").then(result => {
+                return result.json()
+            }).then(json => {
+                app.children = json
+                app.name = ""
+                app.parents = []
+            })
+        }
+
         var app = new Vue({
           el: '#app',
           data: {
             name:"Placeholder",
             parents:[],
             children:[],
-            showFid: showFid
+            showFid: showFid,
+            showOverview: showOverview
           },
         })
 
-        showFid(7496251)
+        showOverview()
     </script>
 </html>

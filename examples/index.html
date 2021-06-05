@@ -1,0 +1,76 @@
+<html>
+    <head>
+         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+   integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+   crossorigin=""/>
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+   integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+   crossorigin=""></script>
+        <link rel="stylesheet" href="https://unpkg.com/tachyons@4.12.0/css/tachyons.min.css"/>
+        <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+        <style>
+            body, #map {
+                height: 100vh;
+                font-family: sans-serif;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="flex vh-100">
+            <div class="w5 pa3" id="app">
+                <h4>protoshapes</h4>
+                <div>
+                    parents:
+                    <div v-for="parent in parents">
+                      <span v-on:click="foo(parent)">{{ parent }}</span>
+                    </div>
+                </div>
+
+                <div>
+                    children:
+                    <div v-for="child in children">
+                      <span v-on:click="foo(child)">{{ child }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-grow-1">
+                <div id="map"></div>
+            </div>
+        </div>
+    </body>
+    <script>
+        var map = L.map('map').setView([51.505, -0.09], 13)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map)
+
+        var currentLayer
+
+        const showFid = fid => {
+            fetch("/shape/" + fid).then(result => {
+                return result.json()
+            }).then(json => {
+                app.parents = json.properties.parents
+                app.children = json.properties.children
+                if (currentLayer) {
+                    map.removeLayer(currentLayer)
+                }
+                let layer = L.geoJSON(json.geometry)
+                layer.addTo(map)
+                currentLayer = layer
+                map.fitBounds(layer.getBounds())
+            })
+        }
+
+        var app = new Vue({
+          el: '#app',
+          data: {
+            parents:[],
+            children:[],
+            foo: showFid
+          },
+        })
+
+        showFid(6703079)
+    </script>
+</html>

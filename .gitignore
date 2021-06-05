@@ -2,3 +2,4 @@ __pycache__
 *.fgb
 *.osm.pbf
 *.sqlite
+venv

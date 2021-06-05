@@ -17,19 +17,20 @@
     </head>
     <body>
         <div class="flex vh-100">
-            <div class="w5 pa3" id="app">
+            <div class="w5 pa3 overflow-y-scroll" id="app">
                 <h4>protoshapes</h4>
+                <div class="mb2">{{ name }}</div>
                 <div>
                     parents:
                     <div v-for="parent in parents">
-                      <span v-on:click="foo(parent)">{{ parent }}</span>
+                      <span v-on:click="showFid(parent.id)" class="blue underline pointer">{{ parent.name }}</span>
                     </div>
                 </div>
 
                 <div>
                     children:
                     <div v-for="child in children">
-                      <span v-on:click="foo(child)">{{ child }}</span>
+                      <span v-on:click="showFid(child.id)" class="blue underline pointer">{{ child.name }}</span>
                     </div>
                 </div>
             </div>
@@ -52,6 +53,7 @@
             }).then(json => {
                 app.parents = json.properties.parents
                 app.children = json.properties.children
+                app.name = json.properties.name
                 if (currentLayer) {
                     map.removeLayer(currentLayer)
                 }
@@ -65,12 +67,13 @@
         var app = new Vue({
           el: '#app',
           data: {
+            name:"Placeholder",
             parents:[],
             children:[],
-            foo: showFid
+            showFid: showFid
           },
         })
 
-        showFid(6703079)
+        showFid(7496251)
     </script>
 </html>

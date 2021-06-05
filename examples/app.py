@@ -32,16 +32,26 @@ def index():
 def get_shape(shape_id):
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("SELECT wkb_geometry,a2,a3,a4,a5,a6,a7,a8,a9,a10,admin_level from features_original where id = ?",(shape_id,))
+    cursor.execute("SELECT name, wkb_geometry,a2,a3,a4,a5,a6,a7,a8,a9,a10,admin_level from features_original where id = ?",(shape_id,))
     row = cursor.fetchone()
-    parents = []
-    children = []
+
+    parent_ids = []
+    # populate the parents
     for key in ['a2','a3','a4','a5','a6','a7','a8','a9','a10']:
-        parents.append(row[key])
+        parent_ids.append(row[key])
+
+    parents = []
+    parent_results = cursor.execute("SELECT id, name FROM features_original WHERE ID IN (?,?,?,?,?,?,?,?,?)",parent_ids)
+    for parent in parent_results:
+        parents.append({'id':parent['id'],'name':parent['name']})
+
+    # populate the children
+    children = []
     if row['admin_level']:
-        query = f"SELECT id from features_original where a{row['admin_level']} = ?"
+        query = f"SELECT id, name from features_original where a{row['admin_level']} = ?"
         results = cursor.execute(query,(int(shape_id),))
         for result in results:
-            children.append(result['id'])
+            children.append({'id':result['id'],'name':result['name']})
+
     mp = wkblib.loads(row['wkb_geometry'])
-    return jsonify({'geometry':mapping(mp),'type':'Feature','properties':{'parents':parents,'children':children}})
+    return jsonify({'geometry':mapping(mp),'type':'Feature','properties':{'name':row['name'],'parents':parents,'children':children}})

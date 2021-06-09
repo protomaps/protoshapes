@@ -132,9 +132,12 @@ def main():
                 #     print(osm_id(fid),"in",osm_id(within[admin_level-2]),"or",osm_id(candidate))
                 within[admin_level-2] = candidate
                 for i in range(admin_level+1,11):
-                    if candidate_admins[i-2]:
-                        within[i-2] = candidate_admins[i-2]
-                        candidates.remove(candidate_admins[i-2])
+                    existing_admin = candidate_admins[i-2]
+                    if existing_admin:
+                        within[i-2] = existing_admin
+                        if existing_admin in candidates:
+                            candidates.remove(existing_admin)
+
         subcursor.execute("UPDATE features_original SET a2=?, a3=?,a4=?,a5=?,a6=?,a7=?,a8=?,a9=?,a10=? WHERE id = ?",within + [fid])
         conn.commit()
 

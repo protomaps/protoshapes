@@ -72,7 +72,7 @@ class Handler(osmium.SimpleHandler):
                 if area > 50000:
                     self.cursor.execute("INSERT INTO features_original(id,name,boundary,admin_level,area,wkb_geometry) VALUES (?,?,?,?,?,?)",(a.id,a.tags.get("name"),a.tags.get("boundary"),a.tags.get("admin_level"),area,multipolygon.wkb))
                     self.conn.commit()
-                    if admin_level and int(admin_level) in [2,3,4,5,6,7,8,9,10]:
+                    if admin_level and admin_level in ['2','3','4','5','6','7','8','9','10']:
                         self.idx.insert(a.id,multipolygon.bounds,obj=int(admin_level))
         except RuntimeError as e:
             print("Error:",a.orig_id())

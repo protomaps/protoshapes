@@ -23,7 +23,10 @@ Prepare your PBF file:
     ogr2ogr -f flatgeobuf protoshapes-planet.fgb protoshapes-planet.csv
 
 ## See also
+* [Betashapes](https://github.com/simplegeo/betashapes)
+* [Zetashapes](https://github.com/blackmad/zetashapes)
 * [Quattroshapes](http://quattroshapes.com)
 * [Mesoshapes](https://www.mapzen.com/blog/mesoshapes/)
 * [Cosmogony](https://github.com/osm-without-borders/cosmogony)
+* [osm-boundaries](https://github.com/missinglink/osm-boundaries)
 

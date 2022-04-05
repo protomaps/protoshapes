@@ -1,0 +1,57 @@
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+        <script src="https://unpkg.com/leaflet-hash@0.2.1/leaflet-hash.js"></script>
+        <script src="https://unpkg.com/protomaps@1.17.0/dist/protomaps.min.js"></script>
+        <style>
+            body, #map {
+                height:100vh;
+                margin:0px;
+                background-color:  #000;
+            }
+
+            .leaflet-tile {
+                background-color: black;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="map"></div> 
+        <script>
+            const map = L.map('map')
+            let hash = new L.Hash(map)
+            if (!window.location.hash) map.setView(new L.LatLng(0,0),0)
+
+            var layer1 = protomaps.leafletLayer({url:'https://protomaps-static.sfo3.digitaloceanspaces.com/protoshapes.pmtiles',maxDataZoom:10,paint_rules:[
+                {
+                    dataLayer:"protoshapesfgb",
+                    symbolizer:new protomaps.PolygonSymbolizer({
+                        opacity:0.2,
+                        stroke:"steelblue",
+                        fill:"steelblue",
+                        width:1
+                    })
+                },
+            ],label_rules:[
+                {
+                    dataLayer:"protoshapesfgb",
+                    symbolizer:new protomaps.PolygonLabelSymbolizer({
+                       label_props: ["name"],
+                       fill:"paleturquoise",
+                       font:"600 12px sans-serif"
+                    }),
+                    filter: (z,f) => {
+                        let admin_level = +f.props.admin_level;
+                        if (z < 10) return admin_level < 6;
+                        return true;
+                    }
+                }
+            ]})
+            layer1.addTo(map)
+            layer1.addInspector(map)
+        </script>
+    </body>
+</html>

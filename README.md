@@ -2,7 +2,14 @@
 
 Protoshapes is a free polygon dataset of named places, currently boundaries, derived from OpenStreetMap. It is designed to be fast and flexible to generate. 
 
-The input format is an [OSM Express](https://github.com/protomaps/OSMExpress) database. The output format is a single unindexed FlatGeobuf file in ascending relation order. The conversion step takes 30-40 minutes with minimal RAM requirements on a single computer. 
+The input format is an [OSM Express](https://github.com/protomaps/OSMExpress) database. The conversion step takes 30-40 minutes with minimal RAM requirements on a single computer. 
+
+## Downloads
+
+[Releases](/releases/)
+
+* The dataset (`protoshapes.fgb.zst`) is a [Zstandard](http://facebook.github.io/zstd/)-compressed indexed FlatGeobuf. You will need the `zstd` decompressor to extract the data.
+* All downloads carry the same license as OSM, The [Open Database License](http://openstreetmap.org/copyright)
 
 ## Workflow
 

@@ -1,26 +1,27 @@
 # Protoshapes
 
-## Goals 
-This project doesn't work yet. The goal is to create simplified polygons for places, such as administrative areas like cities or states, with a few special properties:
+Protoshapes is a free polygon dataset of named places, currently boundaries, derived from OpenStreetMap. It is designed to be fast and flexible to generate. 
 
-* Available for download in "1K" and "100K" versions, where the size of the geometry is guaranteed to be less than 1 or 100 kilobytes, respectively. 
-  * This makes it practical to fetch and display any geometry in a web browser.
-* Every point in the original geometry must be in the interior of the 1K or 100K geometry. That is, it is not a naive simplification which might cut away some of the area, but an expansion of the original area.
-  * This property makes it useful as an efficient clipping boundary, since point-in-polygon algorithms are O(number of points).
-* Maritime outer rings ought to be simplified via convex hull joining, but this should not happen for true exclaves.
-* Contains a representative point for labeling, not necessarily the centroid.
-
-## Non-goals
-
-Geometries are designed to be worked with individually, and not for display together in something like a choropleth, because adjacent polygons will overlap when simplified. For that use case you should use [TopoJSON](https://github.com/topojson/topojson) or another kind of quantization-based technique.
+The input format is an [OSM Express](https://github.com/protomaps/OSMExpress) database. The output format is a single unindexed FlatGeobuf file in ascending relation order. The conversion step takes 30-40 minutes with minimal RAM requirements on a single computer. 
 
 ## Workflow
 
-Prepare your PBF file:
+    osmx-protoshapes planet.osmx protoshapes_unindexed.fgb
+    ogr2ogr -f FlatGeobuf protoshapes.fgb protoshapes_unindexed.fgb
+    tippecanoe -o protoshapes.mbtiles protoshapes.fgb -l protoshapes --drop-densest-as-needed
 
-    osmium tags-filter -o planet-boundary.osm.pbf planet.osm.pbf r/boundary
-    create-protoshapes planet-boundary.osm.pbf protoshapes-planet.csv
-    ogr2ogr -f flatgeobuf protoshapes-planet.fgb protoshapes-planet.csv
+## Future Goals 
+
+* Construct an admin_level hierarchy based on spatial relationships.
+* Generalizations in "1K" and "100K" versions, where the size of the geometry is guaranteed to be less than 1 or 100 kilobytes, which makes geometry practical to fetch and display on the web. Every point in the original geometry should be in the interior of the 1K or 100K geometry. That is, it is not a naive simplification which might cut away some of the area, but an expansion of the original area. This property makes it useful as an efficient clipping boundary.
+* Maritime outer rings ought to be simplified via convex hull joining, but this should not happen for true exclaves.
+* Contain a representative point for labeling (pole of inaccessibility), not necessarily the centroid.
+
+## Non-goals
+
+* Geometries are designed to be worked with individually, and not for display together in something like a choropleth, because adjacent polygons will overlap when simplified. For that use case you should use [TopoJSON](https://github.com/topojson/topojson) or another kind of quantization-based technique.
+* Does not interpret OSM admin_levels in an opinionated way.
+* Not a geocoder or reverse geocoder, but useful as information to augment geocoding results. 
 
 ## See also
 * [Betashapes](https://github.com/simplegeo/betashapes)

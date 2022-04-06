@@ -6,7 +6,7 @@ The input format is an [OSM Express](https://github.com/protomaps/OSMExpress) da
 
 ## Downloads
 
-[Releases](/releases/)
+[Link to download](https://downloads.protomaps.com/files/protoshapes_20220406.fgb.zst) - 2.29 GB, 584043 features
 
 * The dataset (`protoshapes.fgb.zst`) is a [Zstandard](http://facebook.github.io/zstd/)-compressed indexed FlatGeobuf. You will need the `zstd` decompressor to extract the data.
 * All downloads carry the same license as OSM, The [Open Database License](http://openstreetmap.org/copyright)
